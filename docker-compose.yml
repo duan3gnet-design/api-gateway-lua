@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  api-gateway:
+    build: .
+    container_name: api-gateway-lua
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./lua:/usr/local/openresty/nginx/lua:ro
+      - ./conf:/usr/local/openresty/nginx/conf/conf:ro
+      - ./conf/sysctl.conf:/etc/sysctl.conf
+      - ./logs:/usr/local/openresty/nginx/logs
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-change-me-super-secret-key-32chars!!}
+      - JWT_ISSUER=${JWT_ISSUER:-auth-service}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 1024M
+    networks:
+      - microservices-net
+
+  # ==================== whoami performance test ====================
+  who-am-i:
+    container_name: who-am-i
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+    ports:
+      - "81:80"
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "4.0"
+    #       memory: 3072M
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    # external: true   # Kết nối vào network chung của Spring Boot services
+    name: microservices-net
+    driver: bridge

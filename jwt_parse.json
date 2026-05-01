@@ -1,0 +1,14 @@
+{
+    "payload": "{\"sub\":\"admin\",\"roles\":[\"ROLE_ADMIN\"],\"permissions\":[\"orders:READ\",\"profile:DELETE\",\"profile:UPDATE\",\"orders:UPDATE\",\"products:READ\",\"users:CREATE\",\"users:READ\",\"orders:CREATE\",\"products:DELETE\",\"profile:CREATE\",\"users:DELETE\",\"products:UPDATE\",\"users:UPDATE\",\"products:CREATE\",\"orders:DELETE\",\"profile:READ\"],\"iat\":1777608168,\"exp\":1777694568}",
+    "sig_from_token": "-i0J8DMNXMR-iHYT0aEcMVOpMgPOnlYrsiD83NiosiI",
+    "signing_input": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlJPTEVfQURNSU4iXSwicGVybWlzc2lvbnMiOlsib3JkZXJzOlJFQUQiLCJwcm9maWxlOkRFTEVURSIsInByb2ZpbGU6VVBEQVRFIiwib3JkZXJzOlVQREFURSIsInByb2R1Y3RzOlJFQUQiLCJ1c2VyczpDUkVBVEUiLCJ1c2VyczpSRUFEIiwib3JkZXJzOkNSRUFURSIsInByb2R1Y3RzOkRFTEVURSIsInByb2ZpbGU6Q1JFQVRFIiwidXNlcnM6REVMRVRFIiwicHJvZHVjdHM6VVBEQVRFIiwidXNlcnM6VVBEQVRFIiwicHJvZHVjdHM6Q1JFQVRFIiwib3JkZXJzOkRFTEVURSIsInByb2ZpbGU6UkVBRCJdLCJpYXQiOjE3Nzc2MDgxNjgsImV4cCI6MTc3NzY5NDU2OH0",
+    "secret_length": 56,
+    "secret_preview": "bXlfc3...",
+    "header": "{\"alg\":\"HS256\"}",
+    "sig_computed_b64url": "HN2_owF_1AyOy6mNBPPRD_Z3zvPdDnSKVWKVG2UrJwA",
+    "sig_computed_b64url_padded": "HN2_owF_1AyOy6mNBPPRD_Z3zvPdDnSKVWKVG2UrJwA=",
+    "sig_computed_b64_standard": "HN2\/owF\/1AyOy6mNBPPRD\/Z3zvPdDnSKVWKVG2UrJwA=",
+    "match_b64url": false,
+    "match_b64url_padded": false,
+    "match_b64_standard": false
+}
