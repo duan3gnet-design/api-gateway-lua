@@ -116,6 +116,49 @@ curl -X POST http://localhost:8080/admin/blacklist \
 curl http://localhost:8080/admin/stats
 ```
 
+---
+
+## ⚡ Performance Testing
+
+### Stack
+
+| Tool | Role |
+|---|---|
+| [JMeter](https://jmeter.apache.org/) | Load generator — scripted scenarios, thresholds, checks |
+| Docker Compose | Spin up full stack với `perf` profile |
+
+### Kịch bản test
+
+[RBAC Gateway test plan](<performance-test/RBAC Gateway.jmx>)
+
+---
+
+### Kết quả đo được (khi service đã chạy ổn định)
+
+> Môi trường: Docker Compose trên Windows 11 / WSL2, whoami service giới hạn **12 CPU + 8 GB RAM**, api gateway giới hạn **4 CPU + 1 GB RAM**.
+
+#### Trực tiếp vs qua Gateway tải cao (500 VUs, 200K Requests)
+
+| Metric      | Direct `:81` | Via Gateway `:8080` | Overhead |
+|-------------|-----------------------|---------------------|----------|
+| Throughput  | **18791 req/s**        | **14326 req/s**      | ~24%    |
+| p50 latency | 12 ms                 | 19 ms              | +7 ms  |
+| p95 latency | 76 ms                | 96 ms              | +20 ms  |
+| p99 latency | 109 ms               | 143 ms              | +34 ms  |
+| Error rate  | 0%                    | 0%                  | —        |
+
+#### Trực tiếp vs qua Gateway tải thấp (500 VUs, 1000 Requests)
+
+| Metric      | Direct `:81` | Via Gateway `:8080` | Overhead |
+|-------------|-----------------------|---------------------|----------|
+| Throughput  | **975 req/s**        | **931 req/s**      | ~5%    |
+| p50 latency | 2 ms                 | 2 ms              | <1 ms  |
+| p95 latency | 7 ms                | 6 ms              | -1 ms  |
+| p99 latency | 22 ms               | 32 ms              | +10 ms  |
+| Error rate  | 0%                    | 0%                  | —        |
+
+> Gateway overhead <1 ms/request: JWT validation + Redis rate limit + route cache lookup + header mutation + permission check.
+
 ## Tích hợp với Spring Boot project
 
 Gateway này hoạt động như tầng front-door trước `auth-service` (`:8081`) và `resource-service` (`:8082`).
