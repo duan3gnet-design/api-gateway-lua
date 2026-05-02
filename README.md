@@ -75,9 +75,6 @@ luarocks install lua-resty-hmac
 |---|---|---|
 | `JWT_SECRET` | *(cần đặt)* | Secret HS256, ≥ 32 ký tự |
 | `JWT_ISSUER` | `auth-service` | Issuer check trong payload |
-| `RATE_LIMIT_MAX` | `100` | Max request per window |
-| `RATE_LIMIT_WINDOW` | `60` | Window tính bằng giây |
-| `LOG_LEVEL` | `info` | debug / info / warn / error |
 
 ### 4. Khởi động
 
@@ -141,10 +138,10 @@ curl http://localhost:8080/admin/stats
 
 | Metric      | Direct `:81` | Via Gateway `:8080` | Overhead |
 |-------------|-----------------------|---------------------|----------|
-| Throughput  | **18791 req/s**        | **14326 req/s**      | ~24%    |
-| p50 latency | 12 ms                 | 19 ms              | +7 ms  |
-| p95 latency | 76 ms                | 96 ms              | +20 ms  |
-| p99 latency | 109 ms               | 143 ms              | +34 ms  |
+| Throughput  | **18791 req/s**        | **13496 req/s**      | ~29%    |
+| p50 latency | 12 ms                 | 20 ms              | +8 ms  |
+| p95 latency | 76 ms                | 103 ms              | +27 ms  |
+| p99 latency | 109 ms               | 156 ms              | +47 ms  |
 | Error rate  | 0%                    | 0%                  | —        |
 
 #### Trực tiếp vs qua Gateway tải thấp (500 VUs, 1000 Requests)

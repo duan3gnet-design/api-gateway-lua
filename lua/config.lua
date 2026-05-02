@@ -1,75 +1,49 @@
 -- lua/config.lua
--- Toàn bộ cấu hình gateway tập trung tại đây
-
 local _M = {}
 
 -- ── JWT ───────────────────────────────────────────────────────────────────
 _M.jwt = {
-    secret          = os.getenv("JWT_SECRET") or "change-me-super-secret-key-32chars!!",
-    issuer          = os.getenv("JWT_ISSUER") or "auth-service",
-    algorithm       = "HS256",
-    -- Header name chứa token (Authorization: Bearer <token>)
-    header          = "Authorization",
+    secret    = os.getenv("JWT_SECRET") or "change-me-super-secret-key-32chars!!",
+    issuer    = os.getenv("JWT_ISSUER") or "auth-service",
+    algorithm = "HS256",
 }
 
--- ── Rate Limiting ─────────────────────────────────────────────────────────
+-- ── Database (PostgreSQL) ─────────────────────────────────────────────────
+_M.db = {
+    host     = os.getenv("DB_HOST")     or "host.docker.internal",
+    port     = os.getenv("DB_PORT")     or "5432",
+    name     = os.getenv("DB_NAME")     or "gateway_db",
+    user     = os.getenv("DB_USER")     or "postgres",
+    password = os.getenv("DB_PASSWORD") or "postgres",
+}
+
+-- ── Route reload ──────────────────────────────────────────────────────────
+_M.route_reload = {
+    -- Polling interval (giây). Set 0 để tắt polling.
+    interval = tonumber(os.getenv("ROUTE_RELOAD_INTERVAL")) or 30,
+}
+
+-- ── Rate Limiting (default, override per-route từ DB) ─────────────────────
 _M.rate_limit = {
-    -- Số request tối đa trong window
-    max_requests    = tonumber(os.getenv("RATE_LIMIT_MAX")) or 100,
-    -- Cửa sổ thời gian (giây)
-    window_seconds  = tonumber(os.getenv("RATE_LIMIT_WINDOW")) or 60,
-    -- Key: "ip" hoặc "user" (dùng user_id nếu đã auth)
-    key_by          = "ip",
+    max_requests   = tonumber(os.getenv("RATE_LIMIT_MAX"))    or 100,
+    window_seconds = tonumber(os.getenv("RATE_LIMIT_WINDOW")) or 60,
 }
 
--- ── Upstream Services ─────────────────────────────────────────────────────
-_M.services = {
-    auth = {
-        name    = "auth_service",
-        prefix  = "/api/auth",
-        -- Các path không cần JWT
-        public_paths = {
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/auth/refresh",
-            "/api/auth/validate",
-            "/api/auth/oauth2/",
-        },
-    },
-    resource = {
-        name   = "resource_service",
-        prefix = "/api/resources",
-    },
-    whoami = {
-        name   = "who_am_i",
-        prefix = "/who-am-i",
-    },
-}
-
--- ── RBAC: permission map ──────────────────────────────────────────────────
--- Format: [method][path_pattern] = required_permission
--- Permission khớp với format "resource:action" trong JWT claim "permissions"
+-- ── RBAC permission map (vẫn giữ trong code, ít thay đổi) ────────────────
 _M.rbac = {
-    ["GET"]    = {
-        ["/api/resources/items"]     = "items:read",
-        ["/api/resources/items/(.+)"] = "items:read",
-        ["/api/resources/admin"]     = "admin:read",
+    ["GET"] = {
+        ["/api/resource/items"]      = "items:READ",
+        ["/api/resource/items/(.+)"] = "items:READ",
     },
-    ["POST"]   = {
-        ["/api/resources/items"]     = "items:write",
+    ["POST"] = {
+        ["/api/resource/items"]      = "items:CREATE",
     },
-    ["PUT"]    = {
-        ["/api/resources/items/(.+)"] = "items:write",
+    ["PUT"] = {
+        ["/api/resource/items/(.+)"] = "items:UPDATE",
     },
     ["DELETE"] = {
-        ["/api/resources/items/(.+)"] = "items:delete",
-        ["/api/resources/admin/(.+)"] = "admin:delete",
+        ["/api/resource/items/(.+)"] = "items:DELETE",
     },
-}
-
--- ── Logging ───────────────────────────────────────────────────────────────
-_M.log = {
-    level = os.getenv("LOG_LEVEL") or "info",  -- debug | info | warn | error
 }
 
 return _M

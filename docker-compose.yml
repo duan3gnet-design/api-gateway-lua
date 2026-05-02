@@ -10,14 +10,20 @@ services:
       - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
       - ./lua:/usr/local/openresty/nginx/lua:ro
       - ./conf:/usr/local/openresty/nginx/conf/conf:ro
-      - ./conf/sysctl.conf:/etc/sysctl.conf
       - ./logs:/usr/local/openresty/nginx/logs
     environment:
-      - JWT_SECRET=${JWT_SECRET:-change-me-super-secret-key-32chars!!}
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_ISSUER=${JWT_ISSUER:-auth-service}
-      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
-      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-gateway_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -28,6 +34,7 @@ services:
           memory: 1024M
     networks:
       - microservices-net
+      - rbac-gateway_rbac-network
 
   # ==================== whoami performance test ====================
   who-am-i:
@@ -47,8 +54,31 @@ services:
     networks:
       - microservices-net
 
+  # ==================== PostgreSQL ====================
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: rbac-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: postgres
+  #     POSTGRES_USER: ${DB_USERNAME:-postgres}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-12345}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - rbac-network
+
 networks:
   microservices-net:
     # external: true   # Kết nối vào network chung của Spring Boot services
     name: microservices-net
     driver: bridge
+  rbac-gateway_rbac-network:
+    external: true

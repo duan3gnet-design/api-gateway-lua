@@ -1,48 +1,34 @@
--- lua/middleware/rate_limiter.lua
--- Optimized: giảm key allocation, dùng incr atomic
+-- lua/middleware/rate_limit_fn.lua
+-- Function-style rate limiter
 
-local config   = require("config")
-local response = require("utils.response")
+local _M  = {}
+local store = ngx.shared.rate_limit_store
 
-local _M = {}
-function _M.check()
-    -- Cache config ở module level
-    local MAX_REQUESTS   = config.rate_limit.max_requests
-    local WINDOW_SECONDS = config.rate_limit.window_seconds
-    local KEY_BY_USER    = (config.rate_limit.key_by == "user")
-    local store          = ngx.shared.rate_limit_store
-
-    -- Pre-build header values (constant strings)
-    local MAX_REQUESTS_STR   = tostring(MAX_REQUESTS)
-    local WINDOW_SECONDS_STR = tostring(WINDOW_SECONDS) .. "s"
-    local RETRY_AFTER_STR    = tostring(WINDOW_SECONDS)
-
-    -- ── Main ──────────────────────────────────────────────────────────────────
+function _M.check(max_requests, window_seconds)
     local ctx = ngx.ctx
     local key
-    if KEY_BY_USER and ctx.user_id and ctx.user_id ~= "" then
+    if ctx.user_id and ctx.user_id ~= "" then
         key = "u:" .. ctx.user_id
     else
-        key = "i:" .. ngx.var.binary_remote_addr  -- binary = 4 bytes, nhỏ hơn string IP
+        key = "i:" .. ngx.var.binary_remote_addr
     end
 
-    -- atomic incr – nếu key chưa tồn tại, init = 0 rồi incr lên 1
-    local count, err = store:incr(key, 1, 0, WINDOW_SECONDS)
+    local count, err = store:incr(key, 1, 0, window_seconds)
     if not count then
-        -- Fail open: store lỗi thì cho qua
         ngx.log(ngx.ERR, "rate_limit store error: ", err)
-        return
+        return true, nil  -- fail open
     end
 
-    -- Set headers – chỉ set khi cần thiết
-    ngx.header["X-RateLimit-Limit"]     = MAX_REQUESTS_STR
-    ngx.header["X-RateLimit-Remaining"] = math.max(0, MAX_REQUESTS - count)
-    ngx.header["X-RateLimit-Window"]    = WINDOW_SECONDS_STR
+    ngx.header["X-RateLimit-Limit"]     = max_requests
+    ngx.header["X-RateLimit-Remaining"] = math.max(0, max_requests - count)
+    ngx.header["X-RateLimit-Window"]    = window_seconds .. "s"
 
-    if count > MAX_REQUESTS then
-        ngx.header["Retry-After"] = RETRY_AFTER_STR
-        response.too_many_requests()
+    if count > max_requests then
+        ngx.header["Retry-After"] = window_seconds
+        return false, string.format(
+            "Vượt quá %d request / %ds", max_requests, window_seconds)
     end
-
+    return true, nil
 end
+
 return _M
